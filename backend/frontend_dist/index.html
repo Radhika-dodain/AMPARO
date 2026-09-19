@@ -1,0 +1,37 @@
+<!--
+  The single page the whole app lives in.
+
+  Holds: the page title, the mobile viewport setting (this gets demoed on a
+  phone, so that line is not optional), the three typefaces, and an empty div
+  that React fills in.
+
+  Leaflet's own stylesheet is imported from main.jsx rather than linked here,
+  so the bundler versions it and it cannot fall out of step with the Leaflet
+  we actually installed.
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBF6E9" />
+    <meta
+      name="description"
+      content="Amparo shows you two ways home: the fastest, and one with less risk on the streets it walks. Map your own safety."
+    />
+
+    <title>Amparo — map your own safety</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Karla:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" crossorigin src="/assets/index-5J-aIDEU.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CWQjByOc.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

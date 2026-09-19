@@ -1,0 +1,1018 @@
+/*
+  All the styling for the app.
+
+  WHAT GOES IN HERE:
+  - the colour palette and fonts, defined once at the top so the whole app
+    can be re-themed by editing a few lines
+  - the full-screen map, with the control panel floating over it
+  - the phone layout: panel becomes a sheet that slides up from the bottom,
+    and every button is big enough to hit with a thumb
+  - the route cards, so the selected route is unmistakably the selected one
+  - the panic button: red, round, floating, always on top
+  - the slider, styled so the two ends read as "faster" and "safer"
+
+  Remember this gets demoed on a phone. Test it at phone width early, not on
+  the last day.
+
+  ONE RULE WORTH KEEPING:
+  Everything around the map is warm - paper, leaf, clay. The map itself is the
+  only cool thing on the screen. That contrast is what keeps the eye pointed at
+  the map instead of at the furniture, and it is why the chrome must never
+  reach for the same greens the risk shading uses.
+*/
+
+/* ========================================================================
+   Tokens
+   ======================================================================== */
+:root {
+  --paper: #fbf6e9;
+  --paper-edge: #e2dac4;
+  --mint: #e8f4e6;
+  --mint-edge: #beddb4;
+  --panel-edge: #e4efdd;
+  --leaf: #2f8b52;
+  --leaf-bright: #4e9e63;
+  --deep: #1b4e30;
+  --clay: #d9633f;
+  --clay-ink: #b24a28;
+  --sun: #f2c94c;
+  --sun-pale: #fff7e2;
+  --sun-edge: #ebcf8e;
+  --sun-ink: #7a5410;
+  --alarm: #d9433f;
+  --ink: #23342c;
+  --muted: #5e7a6c;
+  --faint: #7c8f84;
+  --white: #fff;
+
+  --display: 'Baloo 2', system-ui, sans-serif;
+  --body: Karla, system-ui, sans-serif;
+  --hand: Caveat, cursive;
+
+  --r-lg: 24px;
+  --r-md: 18px;
+  --r-sm: 13px;
+  --shadow: 0 10px 26px rgba(35, 52, 44, 0.16);
+  --shadow-soft: 0 6px 16px rgba(35, 52, 44, 0.1);
+  --header-h: 168px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--body);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Anyone who has asked their system for stillness gets it. The characters are
+   decoration; nothing is lost by holding them still. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ========================================================================
+   Idling characters
+   ======================================================================== */
+@keyframes a-bob {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(-7px) rotate(1.5deg); }
+}
+@keyframes a-bob-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes a-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(46px); }
+}
+@keyframes a-flutter {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(16px, -14px) rotate(9deg); }
+  50% { transform: translate(34px, 4px) rotate(-6deg); }
+  75% { transform: translate(16px, 16px) rotate(7deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+@keyframes a-wing {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.45); }
+}
+@keyframes a-pulse {
+  0% { transform: scale(0.6); opacity: 0.75; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes a-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.a-walker { animation: a-bob 3.6s ease-in-out infinite; transform-origin: bottom center; }
+.a-penguin { animation: a-bob-slow 2.4s ease-in-out infinite; transform-origin: bottom center; }
+.a-clouds { animation: a-drift 17s ease-in-out infinite alternate; }
+.a-bird { transform-origin: center; animation: a-wing 1.1s ease-in-out infinite; }
+.a-bird-2 { animation-duration: 1.35s; }
+.a-butterfly { animation: a-flutter 7s ease-in-out infinite; }
+
+/* ========================================================================
+   Shell
+   ======================================================================== */
+.a-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  /* overflow:hidden still lets the browser scroll this box programmatically
+     when something inside it takes focus. Fixing it in place means a stray
+     focus can never drag the header off the screen. */
+  position: fixed;
+  inset: 0;
+}
+
+/* ---- header ---------------------------------------------------------- */
+.a-header {
+  position: relative;
+  flex: 0 0 var(--header-h);
+  height: var(--header-h);
+  background: #cbdcec;
+  overflow: hidden;
+}
+
+.a-sky-wrap { position: absolute; inset: 0; }
+.a-sky { display: block; }
+
+.a-header-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 26px 0;
+}
+
+.a-wordmark { line-height: 1; }
+.a-name {
+  font-family: var(--display);
+  font-size: 27px;
+  font-weight: 800;
+  color: var(--deep);
+}
+.a-tagline {
+  font-family: var(--hand);
+  font-size: 17px;
+  font-weight: 700;
+  color: #3d6552;
+  margin-top: 1px;
+}
+
+.a-header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.a-place-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid var(--white);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--deep);
+}
+
+.a-cast {
+  position: absolute;
+  left: 40px;
+  bottom: -6px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.a-fly-1 { position: absolute; left: 300px; top: 92px; }
+.a-fly-2 { position: absolute; right: 22%; top: 58px; animation-duration: 9s; animation-direction: reverse; }
+
+.a-header-note {
+  position: absolute;
+  right: 26px;
+  bottom: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #3d6552;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
+
+/* ---- body ------------------------------------------------------------ */
+.a-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 20px;
+  padding: 18px 26px 22px;
+}
+
+.a-mapcard {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 3px solid #cfe6c6;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: var(--shadow-soft);
+}
+
+.a-map { width: 100%; height: 100%; background: #eef3ef; }
+
+/* The ordinary OpenStreetMap style is a touch loud for our purposes: its
+   greens and yellows compete with the risk colours we paint on top of it.
+   Easing the saturation off pushes it back into the role of a background
+   without losing anything you need to read. */
+.a-tiles-streets { filter: saturate(0.68) brightness(1.05) contrast(0.95); }
+.a-map-loading {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-family: var(--display);
+  color: var(--muted);
+}
+
+/* ========================================================================
+   Map furniture
+   ======================================================================== */
+.a-maptools {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 500;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.a-card {
+  background: var(--white);
+  border: 3px solid var(--panel-edge);
+  border-radius: var(--r-md);
+  padding: 13px 15px;
+}
+
+.a-switches { display: flex; flex-direction: column; gap: 4px; padding: 9px; }
+
+.a-switch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 11px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+.a-switch:hover { background: #f4f9f2; }
+.a-switch.is-on { background: var(--mint); color: var(--deep); }
+.a-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.a-switch-box {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  border-radius: 6px;
+  border: 2px solid var(--mint-edge);
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  color: transparent;
+}
+.a-switch.is-on .a-switch-box { background: var(--leaf); border-color: var(--leaf); color: var(--white); }
+.a-switch input:focus-visible + .a-switch-box { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+.a-key { width: 202px; padding: 12px 14px; }
+.a-key-title { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--deep); }
+.a-key-ramp { display: flex; height: 9px; border-radius: 5px; overflow: hidden; margin: 8px 0 4px; }
+.a-key-ramp span { flex: 1; }
+.a-key-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--faint); font-weight: 600; }
+
+.a-key-counts { list-style: none; margin: 9px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.a-key-counts li { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.a-key-counts b { margin-left: auto; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.a-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+.a-dot-ring { border: 2px solid var(--white); box-shadow: 0 0 0 1px rgba(35, 52, 44, 0.2); }
+
+.a-key-places {
+  margin-top: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--panel-edge);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.a-key-places span { display: flex; align-items: center; gap: 7px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+/* ---- zoom / recentre ------------------------------------------------- */
+.a-mapbtns {
+  position: absolute;
+  right: 14px;
+  bottom: 96px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.a-mapbtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 2px solid var(--white);
+  background: var(--white);
+  color: var(--deep);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+}
+.a-mapbtn:hover { background: var(--mint); }
+
+/* ---- pins ------------------------------------------------------------ */
+.a-pin-wrap { background: none; border: none; }
+
+.a-pin { position: relative; display: block; width: 26px; height: 26px; }
+.a-pin-dot {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--leaf);
+  border: 4px solid var(--white);
+  box-shadow: 0 2px 6px rgba(35, 52, 44, 0.35);
+}
+.a-pin-pulse {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--leaf);
+  animation: a-pulse 2.2s ease-out infinite;
+}
+
+/* ---- popups ---------------------------------------------------------- */
+.a-pop-wrap .leaflet-popup-content-wrapper {
+  border-radius: var(--r-sm);
+  border: 2px solid var(--panel-edge);
+  box-shadow: var(--shadow-soft);
+}
+.a-pop-wrap .leaflet-popup-content { margin: 10px 12px; font-family: var(--body); }
+.a-pop { display: flex; flex-direction: column; gap: 2px; max-width: 200px; }
+.a-pop-band { font-family: var(--display); font-size: 14px; color: var(--deep); text-transform: capitalize; }
+.a-pop-score { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.a-pop-note { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+/* The risk tooltip: follows the pointer, dismisses itself, never eats a tap. */
+.a-tip.leaflet-tooltip {
+  background: var(--ink);
+  border: none;
+  border-radius: 9px;
+  box-shadow: var(--shadow-soft);
+  color: var(--white);
+  font-family: var(--body);
+  padding: 6px 10px;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.a-tip.leaflet-tooltip::before { border-top-color: var(--ink); }
+.a-tip-band { font-size: 11.5px; font-weight: 600; opacity: 0.8; text-transform: capitalize; }
+.a-tip-score { font-family: var(--display); font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.leaflet-control-attribution {
+  font-family: var(--body);
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+/* ---- route lines ----------------------------------------------------- */
+.a-route { cursor: pointer; transition: stroke-width 0.18s; }
+.a-route-on { filter: drop-shadow(0 1px 3px rgba(35, 52, 44, 0.3)); }
+
+/* ---- the stat strip -------------------------------------------------- */
+.a-stats {
+  position: absolute;
+  /* Centred on the map, but kept clear of the SOS button on the right and the
+     zoom buttons - a stat strip that slides under either is unreadable and
+     makes the button unclickable. */
+  left: 16px;
+  right: 96px;
+  bottom: 16px;
+  width: fit-content;
+  max-width: calc(100% - 112px);
+  margin: 0 auto;
+  overflow-x: auto;
+  z-index: 500;
+  display: flex;
+  align-items: stretch;
+  background: var(--white);
+  border: 3px solid var(--panel-edge);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: a-rise 0.35s ease-out;
+}
+.a-stats-tag {
+  display: grid;
+  place-items: center;
+  padding: 0 14px;
+  color: var(--white);
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 92px;
+  text-align: center;
+  line-height: 1.15;
+}
+.a-stat { padding: 11px 18px; text-align: center; border-right: 1px solid var(--panel-edge); }
+.a-stat:last-child { border-right: none; }
+.a-stat-value {
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.a-stat-label { font-size: 11px; font-weight: 600; color: var(--faint); margin-top: 1px; }
+
+.a-proto {
+  position: absolute;
+  right: 12px;
+  bottom: 4px;
+  z-index: 450;
+  margin: 0;
+  max-width: 250px;
+  text-align: right;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.a-picking {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: var(--deep);
+  color: var(--white);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  animation: a-rise 0.3s ease-out;
+}
+
+/* ========================================================================
+   Panel
+   ======================================================================== */
+.a-panel {
+  flex: 0 0 344px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding-right: 4px;
+}
+.a-panel-grab { display: none; }
+
+.a-planner { display: flex; flex-direction: column; gap: 13px; }
+
+/* ---- trip fields ----------------------------------------------------- */
+.a-trip { padding: 12px 13px; }
+.a-field { display: flex; align-items: center; gap: 10px; padding: 7px 4px; }
+.a-field-dot { width: 12px; height: 12px; flex: 0 0 12px; }
+.a-dot-start { border-radius: 50%; background: var(--leaf-bright); }
+.a-dot-end { border-radius: 3px; background: var(--clay); }
+.a-field-body { flex: 1 1 auto; min-width: 0; }
+.a-field-label { display: block; font-size: 11px; font-weight: 700; color: var(--faint); }
+.a-field-value {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.a-field-value.is-empty { color: var(--faint); font-weight: 500; font-style: italic; }
+.a-field-clear {
+  border: none;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+.a-field-clear:hover { background: var(--mint); color: var(--deep); }
+.a-trip-rule { display: block; height: 1px; background: var(--panel-edge); margin: 2px 0 2px 22px; }
+
+.a-trip-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+.a-mini {
+  border: 2px solid var(--panel-edge);
+  background: #f4f9f2;
+  color: #3d6552;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-family: var(--body);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.a-mini:hover:not(:disabled) { background: var(--mint); border-color: var(--mint-edge); }
+.a-mini:disabled { opacity: 0.45; cursor: not-allowed; }
+.a-mini.is-loud { background: var(--leaf); border-color: var(--leaf); color: var(--white); }
+.a-mini.is-loud:hover { background: var(--deep); border-color: var(--deep); }
+
+/* ---- route cards ----------------------------------------------------- */
+.a-routecards { display: flex; flex-direction: column; gap: 10px; }
+.a-routecards.is-busy { opacity: 0.65; }
+
+.a-routecard {
+  width: 100%;
+  text-align: left;
+  font-family: var(--body);
+  cursor: pointer;
+  display: block;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.a-routecard.is-on { box-shadow: var(--shadow-soft); }
+.a-routecard-head { display: flex; align-items: center; gap: 9px; }
+.a-swatch { width: 22px; height: 5px; border-radius: 3px; flex: 0 0 22px; }
+.a-routecard-name { font-family: var(--display); font-size: 17px; font-weight: 700; }
+.a-routecard-time { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.a-routecard-dist { display: block; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.a-routecard-dist b { font-family: var(--display); font-size: 29px; font-weight: 800; color: var(--ink); }
+.a-routecard-risk { display: flex; align-items: center; gap: 9px; margin-top: 9px; }
+.a-risk-label { font-size: 11px; font-weight: 700; color: var(--faint); }
+.a-bar { flex: 1 1 auto; height: 8px; border-radius: 4px; background: #efe7d2; overflow: hidden; }
+.a-bar-fill { display: block; height: 8px; border-radius: 4px; transition: width 0.3s; }
+.a-risk-word { font-size: 12px; font-weight: 700; text-transform: capitalize; }
+
+/* ---- the tradeoff ---------------------------------------------------- */
+.a-trade { background: var(--mint); border-color: var(--mint-edge); }
+.a-trade.is-quiet { background: #f1f4ee; border-color: #e1e7dc; }
+.a-trade-kicker { font-family: var(--hand); font-size: 19px; font-weight: 700; color: #3d6552; }
+.a-trade-line { font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--deep); line-height: 1.32; }
+.a-trade-line b { font-weight: 800; }
+
+/* ---- slider ---------------------------------------------------------- */
+.a-slider-title { display: block; font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--deep); }
+.a-optional { font-family: var(--body); font-size: 12px; font-weight: 500; color: var(--faint); }
+
+.a-range {
+  width: 100%;
+  height: 28px;
+  margin: 8px 0 0;
+  accent-color: var(--leaf);
+  cursor: pointer;
+}
+.a-slider-ends { display: flex; justify-content: space-between; }
+.a-end-fast { font-size: 12px; font-weight: 700; color: var(--clay-ink); }
+.a-end-safe { font-size: 12px; font-weight: 700; color: var(--deep); }
+.a-slider-readout { margin: 9px 0 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+
+/* ---- time of day ----------------------------------------------------- */
+.a-chips {
+  display: inline-flex;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px solid var(--white);
+  border-radius: 999px;
+  padding: 4px;
+}
+.a-tod:not(.is-compact) .a-chips { background: var(--white); border-color: var(--panel-edge); display: flex; }
+.a-chip {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 8px 15px;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  color: #3d6552;
+  cursor: pointer;
+}
+.a-chip.is-on { background: var(--leaf); color: var(--white); }
+.a-tod-blurb { margin: 8px 2px 0; font-size: 12px; line-height: 1.45; color: var(--muted); }
+
+/* ---- report button --------------------------------------------------- */
+.a-report-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: var(--sun-pale);
+  border: 3px dashed var(--sun-edge);
+  border-radius: var(--r-md);
+  padding: 13px 15px;
+  cursor: pointer;
+  font-family: var(--body);
+}
+.a-report-btn:hover { background: #fdf0d2; }
+.a-report-btn b { display: block; font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--sun-ink); }
+.a-report-btn em { display: block; font-style: normal; font-size: 12px; color: #8a6b32; margin-top: 1px; }
+
+/* ---- legend ---------------------------------------------------------- */
+.a-legend { padding: 0 4px 10px; }
+.a-legend-rows { display: flex; flex-direction: column; gap: 5px; }
+.a-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.a-honesty { margin: 10px 0 0; font-size: 11px; line-height: 1.55; color: var(--faint); }
+
+/* ---- empty / error states ------------------------------------------- */
+.a-empty { display: flex; align-items: center; gap: 13px; }
+.a-empty-plain { border: none; padding: 6px 0; }
+.a-empty-title { font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--deep); }
+.a-empty-note { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+
+.a-error {
+  margin: 0;
+  background: #fdeeea;
+  border: 2px solid #f3c9bd;
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9c3a1c;
+  line-height: 1.45;
+}
+.a-warn { margin: 9px 0 0; font-size: 12px; color: var(--sun-ink); line-height: 1.45; }
+.a-quiet { font-size: 13px; color: var(--muted); }
+.a-skeleton { font-size: 13px; color: var(--muted); font-style: italic; }
+.a-fineprint { margin: 8px 0 0; font-size: 11px; color: var(--faint); line-height: 1.5; }
+
+/* ========================================================================
+   SOS
+   ======================================================================== */
+.a-sos {
+  position: absolute;
+  right: 14px;
+  bottom: 22px;
+  z-index: 600;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 4px solid var(--white);
+  background: var(--alarm);
+  color: var(--white);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(217, 67, 63, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+.a-sos span { font-size: 10px; font-weight: 600; }
+.a-sos:hover { background: #c0392b; }
+
+/* ========================================================================
+   Sheets (report, SOS)
+   ======================================================================== */
+.a-sheet-back {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(27, 47, 36, 0.42);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+@media (min-width: 760px) {
+  .a-sheet-back { align-items: center; padding: 24px; }
+}
+
+.a-sheet {
+  width: 100%;
+  max-width: 460px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: 26px 26px 0 0;
+  padding: 10px 20px 22px;
+  box-shadow: 0 -10px 30px rgba(35, 52, 44, 0.2);
+  animation: a-rise 0.28s ease-out;
+}
+@media (min-width: 760px) {
+  .a-sheet { border-radius: var(--r-lg); }
+}
+
+.a-sheet-grab { width: 44px; height: 5px; border-radius: 3px; background: #dce6d6; margin: 0 auto 13px; }
+.a-sheet-head { display: flex; align-items: center; gap: 10px; }
+.a-sheet-title { margin: 0; font-family: var(--display); font-size: 21px; font-weight: 700; color: var(--deep); }
+.a-sheet-sub { margin: 4px 0 13px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.a-tag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3d6552;
+  background: var(--mint);
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.a-where {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #f4f9f2;
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 13px;
+}
+.a-where b { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+.a-cats { border: none; padding: 0; margin: 0 0 14px; }
+.a-cats legend { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--deep); padding: 0 0 8px; }
+.a-cat-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+.a-cat {
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid var(--panel-edge);
+  background: #f1f6ef;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d6552;
+  cursor: pointer;
+}
+.a-cat.is-on { background: var(--leaf); border-color: var(--leaf); color: var(--white); font-weight: 700; }
+.a-cat input { position: absolute; opacity: 0; width: 0; height: 0; }
+.a-cat:has(input:focus-visible) { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+.a-textarea {
+  width: 100%;
+  border: 2px solid var(--panel-edge);
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
+  font-family: var(--body);
+  font-size: 13.5px;
+  color: var(--ink);
+  resize: none;
+  background: #fcfdfb;
+  margin-top: 6px;
+}
+
+.a-sheet-actions { display: flex; gap: 10px; margin-top: 14px; }
+
+.a-btn {
+  flex: 1 1 auto;
+  min-height: 48px;
+  border: none;
+  border-radius: var(--r-sm);
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+.a-btn-green { background: var(--leaf); color: var(--white); }
+.a-btn-green:hover:not(:disabled) { background: var(--deep); }
+.a-btn-red { background: var(--alarm); color: var(--white); }
+.a-btn-ghost { background: #f1f6ef; color: var(--deep); border: 2px solid var(--panel-edge); }
+.a-btn-quiet { background: transparent; color: var(--muted); }
+.a-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.a-sos-sheet { text-align: center; }
+.a-sos-number {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: center;
+  background: #fdeeea;
+  border-radius: var(--r-md);
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+.a-sos-number span {
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--alarm);
+  font-variant-numeric: tabular-nums;
+}
+.a-sos-number .a-btn { flex: 0 0 110px; }
+.a-sos-actions { display: flex; flex-direction: column; gap: 9px; margin-bottom: 10px; }
+
+.a-done { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; text-align: left; }
+.a-done-title { font-family: var(--display); font-size: 19px; font-weight: 700; color: var(--deep); }
+.a-done-note { font-size: 13px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+
+/* ---- history --------------------------------------------------------- */
+.a-history-list { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.a-history-list button {
+  width: 100%;
+  text-align: left;
+  border: 2px solid var(--panel-edge);
+  background: #fcfdfb;
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  font-family: var(--body);
+}
+.a-history-list button:hover { background: var(--mint); }
+.a-history-cat { display: block; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.a-history-when { display: block; font-size: 11.5px; color: var(--faint); margin-top: 1px; }
+.a-history-note { display: block; font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+/* ========================================================================
+   Focus, for anyone driving this from a keyboard
+   ======================================================================== */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+label:focus-within {
+  outline: 3px solid var(--leaf);
+  outline-offset: 2px;
+}
+
+/* ========================================================================
+   Phone
+   ========================================================================
+   The map keeps the screen and the panel becomes a sheet that slides up from
+   the bottom. Collapsed it shows just enough to tell you it is there; tapping
+   the grab bar brings the whole thing up.
+
+   Everything that floats over the map has to be given its own corner here.
+   At 375px the controls, the stat strip and the SOS button will happily pile
+   on top of each other, and a stat strip sitting over the layer switches
+   makes both of them useless.
+
+       top left      zoom buttons
+       top right     layer switches
+       above sheet   stat strip (left) and SOS (right)
+
+   The header also has to lose things rather than squash them: the area pill
+   and the time chips both live in the panel as well, so on a phone they come
+   out of the header entirely instead of wrapping into an unreadable mess.
+*/
+@media (max-width: 900px) {
+  :root { --header-h: 108px; --sheet-peek: 150px; }
+
+  .a-header-row { padding: 12px 14px 0; gap: 10px; }
+  .a-name { font-size: 22px; }
+  .a-tagline { font-size: 14px; }
+
+  /* Both of these are in the panel too - drop the duplicates. */
+  .a-place-pill { display: none; }
+  .a-header-right .a-tod { display: none; }
+
+  .a-cast { left: 12px; bottom: -4px; }
+  .a-cast .a-walker { width: 62px; height: auto; }
+  .a-cast .a-penguin { display: none; }
+  .a-fly-1 { left: 45%; top: 60px; }
+  .a-fly-2 { display: none; }
+  .a-header-note { display: none; }
+
+  .a-main { padding: 0; gap: 0; position: relative; }
+  .a-mapcard { border: none; border-radius: 0; box-shadow: none; }
+
+  /* top right */
+  .a-maptools { top: 10px; right: 10px; gap: 8px; }
+  .a-key { display: none; }
+  .a-switches { padding: 6px; }
+  .a-switch { padding: 9px 10px; font-size: 12.5px; }
+
+  /* top left, in a row - stacked, the third button hides under the sheet */
+  .a-mapbtns { top: 10px; left: 10px; right: auto; bottom: auto; flex-direction: row; }
+  .a-mapbtn { width: 38px; height: 38px; }
+
+  /* above the sheet, sharing the row */
+  .a-stats {
+    left: 10px;
+    right: 78px;
+    bottom: calc(var(--sheet-peek) + 12px);
+    margin: 0;
+    width: auto;
+    max-width: none;
+    border-width: 2px;
+  }
+  .a-stat { padding: 7px 12px; }
+  .a-stat-value { font-size: 16px; }
+  .a-stat-label { font-size: 10px; }
+  .a-stats-tag { padding: 0 10px; font-size: 11px; max-width: 64px; }
+
+  .a-sos {
+    right: 10px;
+    bottom: calc(var(--sheet-peek) + 12px);
+    width: 56px;
+    height: 56px;
+    font-size: 13px;
+  }
+
+  .a-proto { display: none; }
+  .a-picking { top: 62px; font-size: 13.5px; padding: 9px 15px; }
+
+  /* the bottom sheet */
+  .a-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 700;
+    flex: none;
+    max-height: 86%;
+    background: var(--white);
+    border-top: 3px solid var(--panel-edge);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -10px 30px rgba(35, 52, 44, 0.16);
+    padding: 0 14px 18px;
+
+    /* Collapsed by HEIGHT, not by sliding the sheet off the bottom.
+       Sliding it down with a transform leaves most of the panel sitting
+       outside the app box, still in the document and still focusable - so the
+       moment you tap a button down there, the browser scrolls the whole app
+       up to reach it and the header and map slide off the top of the screen.
+       That looked like the layout collapsing at random and took a while to
+       pin down. Changing the height keeps every part of the sheet inside the
+       box it belongs to. */
+    height: var(--sheet-peek);
+    overflow: hidden;
+    transition: height 0.28s ease;
+  }
+  .a-panel.is-open {
+    height: 86%;
+    overflow-y: auto;
+  }
+
+  .a-panel-grab {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    width: 100%;
+    height: 28px;
+    border: none;
+    background: var(--white);
+    cursor: pointer;
+    padding: 0;
+  }
+  .a-panel-grab::after {
+    content: '';
+    display: block;
+    width: 46px;
+    height: 5px;
+    border-radius: 3px;
+    background: #dce6d6;
+    margin: 11px auto 0;
+  }
+
+  /* What the peeking strip shows matters: it is the only part of the panel
+     most people will ever read. So on a phone the tradeoff goes to the top -
+     "+80 m, risk down 43%" is the answer, and the fields they already filled
+     in are not. */
+  .a-planner { display: flex; flex-direction: column; }
+  .a-planner .a-trade { order: -2; }
+  .a-planner .a-routecards { order: -1; }
+
+  /* Thumb-sized hit areas for everything in the sheet. */
+  .a-trip-actions .a-mini { flex: 1 1 auto; min-height: 44px; }
+  .a-btn { min-height: 52px; }
+  .a-chip { padding: 11px 15px; }
+  .a-cat { padding: 10px 14px; }
+}
+
+/* Very narrow phones: the stat strip stops trying to hold five columns. */
+@media (max-width: 420px) {
+  .a-stats { right: 74px; }
+  .a-stat:nth-last-child(-n + 2) { display: none; }
+}

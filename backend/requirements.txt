@@ -1,0 +1,40 @@
+# Backend dependencies. Install with: pip install -r requirements.txt
+
+# --- Web server ---
+fastapi==0.116.1          # the API framework
+uvicorn[standard]==0.35.0 # the thing that actually runs the server
+pydantic==2.11.8           # validates incoming request bodies
+python-dotenv==1.1.1      # reads the .env file
+
+# --- Map data ---
+# PINNED ON PURPOSE. Version 2.x changed how you ask for a map area and the
+# old way crashes instantly. If you upgrade this, you must also rewrite
+# services/graph_build.py. Do not upgrade casually.
+#
+# UPDATE: pinned to 2.x, not the 1.9.4 the note above originally named.
+# services/graph_build.py reads the library's own signature and passes whichever
+# form of the bbox it asks for, so it works on either major version - but the
+# pin still matters, because the two versions take the four edges of the box in
+# a DIFFERENT ORDER. Get that wrong and nothing raises; you just quietly
+# download a different patch of the planet.
+osmnx==2.1.1
+
+networkx==3.5             # holds the street map as a graph and runs A*
+numpy==2.3.3              # fast number crunching for the risk scoring
+scipy==1.16.2             # nearest-neighbour lookups (which pub is closest?)
+shapely==2.1.1            # street shapes / curved line geometry
+
+# Pulled in by osmnx rather than used directly, and pinned anyway.
+# These four are the ones that ship as compiled code, so if the installer ever
+# picks a version with no prebuilt package for the server's Python, it tries to
+# COMPILE them - which on a small free server means a twenty-minute build that
+# then runs out of memory and fails. Pinning versions that are known to have
+# ready-made packages for Python 3.12 is what stops that happening.
+pandas==2.3.2
+pyproj==3.7.1
+pyogrio==0.13.0
+geopandas==1.1.4
+
+# --- Testing (not needed on the server, harmless to install) ---
+pytest==8.3.3
+httpx==0.28.2             # lets tests call the API without starting a server

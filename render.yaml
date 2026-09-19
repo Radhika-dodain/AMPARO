@@ -1,0 +1,59 @@
+# Deploy config — one service, one URL, no CORS.
+#
+# Do this on DAY 2, with an almost-empty app, not on day 13. The map and
+# geometry libraries are heavy and their install surprises are common; you
+# want to hit them with twelve days of slack left, not one.
+#
+# Note there is no build step that downloads the map here, on purpose. The
+# prebuilt map file is committed to the repo, so startup reads it off disk
+# instead of fetching it live from a rate-limited public service while
+# somebody watches a spinner.
+#
+# There is also no step that builds the frontend, and that is on purpose too:
+# this is a Python server with no Node on it. You build the frontend on your
+# own machine and commit the result. See DEPLOY.md.
+#
+# Render reads this file the first time you connect the repo. Change anything
+# here later and you must click "Manual Deploy" for it to be picked up.
+
+services:
+  - type: web
+    name: amparo
+    runtime: python
+    plan: free
+    region: singapore          # closest to Pune of Render's free regions
+    rootDir: backend           # everything below runs from inside backend/
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+
+    # Render pings this to decide whether the app came up. Pointing it at a
+    # real endpoint rather than "/" means a broken map is caught as a failed
+    # deploy instead of quietly serving a dead app.
+    healthCheckPath: /health
+
+    envVars:
+      # Pinned. Left to itself Render picks whatever is newest, and the day it
+      # moves to a Python with no ready-made numpy or scipy package, the build
+      # starts compiling them from source and dies. 3.12 has prebuilt packages
+      # for everything in requirements.txt.
+      - key: PYTHON_VERSION
+        value: 3.12.7
+
+      - key: DEMO_BBOX
+        value: 18.545,18.528,73.905,73.882
+      - key: DEMO_AREA_NAME
+        value: Koregaon Park, Pune
+      - key: EMERGENCY_NUMBER
+        value: "112"
+
+      # Off in production. The frontend is served by this very process, so
+      # every request is same-origin and cross-origin permission would only be
+      # a hole with no purpose.
+      - key: ALLOW_DEV_CORS
+        value: "false"
+
+      - key: SAFETY_WEIGHT_MAX
+        value: "6.0"
+      - key: DISPLAY_UTC_OFFSET_HOURS
+        value: "5.5"

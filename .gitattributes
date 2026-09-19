@@ -1,0 +1,15 @@
+# Keep line endings consistent between your Windows machine and the Linux
+# server this deploys to.
+#
+# Without this, Git rewrites every file's line endings on the way in and out,
+# and you get pull requests where a hundred files "changed" and none of them
+# actually did. Worse, a shell script with Windows line endings fails on Linux
+# with a completely unhelpful error.
+* text=auto eol=lf
+
+# Binary-ish things Git must not touch.
+*.graphml -text
+*.png binary
+*.jpg binary
+*.webp binary
+*.woff2 binary

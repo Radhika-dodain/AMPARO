@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# osmnx's own download cache. Handy locally - it makes a rebuild of the map take
+# 8 seconds instead of 220 - but it is a cache of someone else's server's
+# answers, not our data. The committed files in backend/data/ are what the
+# deploy actually reads.
+backend/cache/
+
+# Local secrets — never commit the real one, only .env.example
+.env
+
+# The reports database is generated at runtime
+backend/data/amparo.db
+
+# NOTE: backend/data/graph_cache.graphml and backend/data/pois.json are
+# DELIBERATELY NOT ignored. They are the prebuilt map and the prebuilt list of
+# places, and a deploy without them downloads both live from a rate-limited
+# public server while the judge watches a spinner. Commit them. Together they
+# are under 1 MB, and they take startup from 220 seconds to half a second.
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# The built frontend that FastAPI serves.
+#
+# COMMITTED ON PURPOSE, like the map cache above, and for a related reason:
+# the server that runs this is a Python server. It has no Node, so it cannot
+# run `npm run build` itself. Shipping the built files means the deploy is
+# exactly what you tested on your own machine, and the whole install is one
+# `pip install`.
+#
+# The cost is that you must remember to rebuild before you push:
+#     cd frontend && npm run check
+# Miss it and the site is live but showing yesterday's frontend, which is a
+# confusing thing to debug at 2am. See DEPLOY.md.
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
