@@ -23,6 +23,7 @@ import main
 from config import settings
 from services.overlay_cache import OverlayCache
 from services.report_feedback import ReportLayer
+from services.routing import NodeIndex
 
 
 @pytest.fixture
@@ -42,6 +43,7 @@ def client(two_ways_home, tmp_path, monkeypatch):
 
     app = main.create_app()
     state = main.AppState(graph=two_ways_home, overlay=OverlayCache())
+    state.nodes = NodeIndex(two_ways_home)
     state.report_layer = ReportLayer(two_ways_home)
     state.overlay.build(two_ways_home)
     app.state.amparo = state

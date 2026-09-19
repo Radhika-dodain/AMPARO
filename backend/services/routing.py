@@ -40,21 +40,60 @@ from typing import Any, Callable, Sequence
 
 import networkx as nx
 import numpy as np
-import osmnx as ox
+from scipy.spatial import cKDTree
 
 from config import band_for_risk, settings
 from services.geometry import (
     edges_along_path,
     haversine_m,
+    local_metre_frame,
     path_to_coordinates,
     walking_minutes,
 )
 from services.risk import risk_attribute
 
 
-def snap_to_node(graph, lat: float, lon: float):
-    """Find the nearest real street corner to a tapped coordinate."""
-    return ox.nearest_nodes(graph, X=lon, Y=lat)
+class NodeIndex:
+    """
+    Which street corner is nearest to a tapped point.
+
+    Built once, at startup, over every corner in the map.
+
+    THIS REPLACED osmnx's OWN nearest_nodes, FOR TWO REASONS.
+
+    The first was a production outage. On an unprojected map - ours, in plain
+    latitude and longitude - osmnx reaches for scikit-learn's BallTree. That is
+    an optional dependency. It happened to be installed on the machine this was
+    written on, so every test passed and every local run worked, and the
+    deployed server returned a 500 for every single route request. Nothing in
+    the code mentioned scikit-learn; it was a dependency the project did not
+    know it had. Doing the lookup ourselves means the only things we need are
+    the ones we wrote down.
+
+    The second is that osmnx built a fresh tree over all the corners on EVERY
+    call. This one is built once and reused, which is simply less work per
+    request.
+
+    The projection is the same local metre frame the risk model uses, so
+    "nearest" means nearest in metres rather than nearest in degrees - which,
+    this far from the equator, is not the same thing.
+    """
+
+    def __init__(self, graph):
+        ref_lat, ref_lon = settings.bbox.center
+        self.project = local_metre_frame(ref_lat, ref_lon)
+
+        self.ids = list(graph.nodes)
+        lats = np.array([graph.nodes[n]["y"] for n in self.ids], dtype=float)
+        lons = np.array([graph.nodes[n]["x"] for n in self.ids], dtype=float)
+        x, y = self.project(lats, lons)
+        self.tree = cKDTree(np.column_stack([x, y]))
+
+    def nearest(self, lat: float, lon: float):
+        """The id of the closest street corner, and how far away it is in metres."""
+        x, y = self.project(float(lat), float(lon))
+        distance, position = self.tree.query([x, y])
+        return self.ids[position], float(distance)
 
 
 def fastest_weight(u, v, data: dict) -> float:

@@ -109,3 +109,42 @@ def test_no_path_between_disconnected_halves():
     graph.add_node(2, y=18.54, x=73.90)
     with pytest.raises(nx.NetworkXNoPath):
         find_routes(graph, 1, 2, k=0.5, hour=23)
+
+
+def test_routing_works_without_scikit_learn(two_ways_home, monkeypatch):
+    """
+    The one test that would have caught a real outage.
+
+    osmnx matches a coordinate to the nearest street corner using
+    scikit-learn's BallTree - but only declares scikit-learn as OPTIONAL. It
+    was installed on the machine this was written on, so every test here
+    passed and every local run worked. The deployed server, which installs
+    only what requirements.txt names, returned an error for every single route
+    request. A dependency the project did not know it had is invisible right
+    up until it is missing.
+
+    So: hide scikit-learn, exactly as the server has it, and route anyway. If
+    anyone reaches for osmnx's own nearest-node lookup again, this fails here
+    instead of in production.
+    """
+    import sys
+
+    # Setting a module to None in sys.modules makes `import` of it raise,
+    # which is what the server's Python does - it genuinely is not there.
+    for name in ("sklearn", "sklearn.neighbors"):
+        monkeypatch.setitem(sys.modules, name, None)
+
+    with pytest.raises(ImportError):
+        import sklearn  # noqa: F401
+
+    from services.routing import NodeIndex
+
+    nodes = NodeIndex(two_ways_home)
+    start, distance = nodes.nearest(18.5300, 73.8900)
+    assert start == ORIGIN
+    assert distance < 5  # metres: it is the corner we asked for
+
+    finish, _ = nodes.nearest(18.5320, 73.8900)
+    result = find_routes(two_ways_home, start, finish, k=0.6, hour=23)
+    assert not result["identical"]
+    assert result["safer"]["distance_m"] > 0

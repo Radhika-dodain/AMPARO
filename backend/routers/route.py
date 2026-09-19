@@ -37,8 +37,8 @@ def get_routes(payload: RouteRequest, request: Request) -> RouteResponse:
     state = request.app.state.amparo
     graph = state.graph
 
-    origin = routing.snap_to_node(graph, payload.origin_lat, payload.origin_lon)
-    destination = routing.snap_to_node(graph, payload.dest_lat, payload.dest_lon)
+    origin, _ = state.nodes.nearest(payload.origin_lat, payload.origin_lon)
+    destination, _ = state.nodes.nearest(payload.dest_lat, payload.dest_lon)
 
     if origin == destination:
         raise HTTPException(

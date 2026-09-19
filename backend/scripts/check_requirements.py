@@ -17,6 +17,19 @@ version is installed on this machine, that version exists.
 Run it after a `pip install -U` too. If something was upgraded and the pin was
 not, this is what tells you - and that is the honest moment to decide whether
 to pin the new version or hold the old one.
+
+A RELATED TRAP THIS SCRIPT DOES NOT CATCH, and which cost a production outage:
+a package that is installed here but never declared. osmnx reaches for
+scikit-learn to match a tapped point to a street corner, and only declares it
+as optional. It was installed on this machine, so every test passed and every
+local run worked - while the deployed server returned an error for every route
+request, because nothing had told it to install scikit-learn.
+
+Scanning for that automatically turned out to be hopeless: the app legitimately
+pulls in a dozen packages it never asked for, and the one that matters is
+invisible among them. So it is guarded where it actually belongs, as a test -
+see tests/test_routing.py, which runs the routing with scikit-learn made
+unavailable, exactly as the server has it.
 """
 
 from __future__ import annotations

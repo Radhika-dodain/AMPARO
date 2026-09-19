@@ -43,6 +43,7 @@ from routers import health, overlay, reports, route
 from services import graph_build, poi, risk
 from services.overlay_cache import OverlayCache
 from services.report_feedback import ReportLayer
+from services.routing import NodeIndex
 
 
 @dataclass
@@ -58,6 +59,7 @@ class AppState:
 
     graph: object = None
     poi_index: object = None
+    nodes: NodeIndex | None = None
     report_layer: ReportLayer | None = None
     overlay: OverlayCache = field(default_factory=OverlayCache)
     startup_seconds: float = 0.0
@@ -83,7 +85,11 @@ def _boot(state: AppState) -> None:
         risk.score_graph(state.graph, state.poi_index)
     print(f"[amparo]   night risk spread: {risk.distribution(state.graph, 'night')}")
 
-    # 3. Replay every stored report on top, so reports still count after a
+    # 3. Build the corner lookup, so a tapped coordinate can be matched to a
+    #    real street corner without rebuilding a search tree per request.
+    state.nodes = NodeIndex(state.graph)
+
+    # 4. Replay every stored report on top, so reports still count after a
     #    restart rather than quietly vanishing.
     db.init_db()
     state.report_layer = ReportLayer(state.graph)
@@ -91,7 +97,7 @@ def _boot(state: AppState) -> None:
     affected = state.report_layer.rebuild(stored)
     print(f"[amparo]   replayed {len(stored)} reports, {affected} streets adjusted")
 
-    # 4. Build the colour overlay now, so no request ever has to.
+    # 5. Build the colour overlay now, so no request ever has to.
     state.overlay.build(state.graph)
     print(f"[amparo]   overlay ready: {state.overlay.summary()}")
 
