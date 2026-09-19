@@ -1,0 +1,9 @@
+# Extra packages for working on Amparo. NOT installed on the server.
+#
+#     pip install -r requirements.txt -r requirements-dev.txt
+#
+# Keeping these out of requirements.txt means a deploy installs only what it
+# actually runs. A test runner cannot break production if it was never there.
+
+pytest==8.3.3
+httpx==0.28.1             # lets tests call the API without starting a server

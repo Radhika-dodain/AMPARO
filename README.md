@@ -43,7 +43,7 @@ external incident feeds, mobile app.
 
     # backend
     cd backend
-    pip install -r requirements.txt
+    pip install -r requirements.txt -r requirements-dev.txt
     python scripts/build_cache.py      # one time — downloads + scores the map
     python scripts/validate_risk.py    # check the model before trusting it
     uvicorn main:app --reload
@@ -59,8 +59,14 @@ and run the backend alone:
     cd frontend && npm run build       # lands in backend/frontend_dist/
     cd ../backend && uvicorn main:app  # http://localhost:8000 serves everything
 
-Before pushing anything: `npm run check` in frontend/ (lint, then build) and
-`python -m pytest` in backend/.
+Before pushing anything, from backend/ and frontend/ respectively:
+
+    python -m pytest                   # 25 tests
+    python scripts/check_requirements.py
+    npm run check                      # lint, then build
+
+The server installs `requirements.txt` only. The dev file adds the test tools,
+which have no business on a production machine.
 
 ## Decisions worth knowing before you touch anything
 

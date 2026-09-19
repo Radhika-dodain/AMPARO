@@ -35,6 +35,8 @@ pyproj==3.7.1
 pyogrio==0.13.0
 geopandas==1.1.4
 
-# --- Testing (not needed on the server, harmless to install) ---
-pytest==8.3.3
-httpx==0.28.2             # lets tests call the API without starting a server
+# Testing tools are NOT here. They live in requirements-dev.txt, because the
+# server has no business installing a test runner: it is two more packages to
+# download, and two more things whose version can break a deploy. One of them
+# already did - a pin on an httpx version that did not exist failed the build
+# with an error that looked alarming and meant nothing.

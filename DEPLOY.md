@@ -199,6 +199,12 @@ correct. Always run these three, in this order:
 cd frontend && npm run check && cd ..
 ```
 
+If you touched anything in `backend/`, also run:
+
+```bash
+cd backend && python -m pytest -q && python scripts/check_requirements.py && cd ..
+```
+
 ```bash
 git add -A && git commit -m "describe what you changed"
 ```
@@ -255,6 +261,7 @@ hosted database. Neither is worth doing before the hackathon.
 
 | What you see | What it actually means | Fix |
 |---|---|---|
+| Build fails: **"Could not find a version that satisfies the requirement"** followed by a huge list of version numbers | A pinned version in `requirements.txt` does not exist. The long list is every version that *does*. | Run `python scripts/check_requirements.py` in `backend/`, fix what it flags, push again |
 | Build fails, log mentions `gcc`, `Building wheel`, or `Killed` | The installer is trying to compile numpy or scipy from source because the Python version changed | In Render: **Environment** → check `PYTHON_VERSION` is `3.12.7`. Then **Manual Deploy** → **Clear build cache & deploy** |
 | Build succeeds, site shows **"No street map at ..."** | `backend/data/graph_cache.graphml` did not reach GitHub | Run `git ls-files backend/data` locally. If the `.graphml` is missing, run `git add -f backend/data/graph_cache.graphml` then commit and push |
 | `/health` says `"edges": 0` | Same as above | Same as above |
