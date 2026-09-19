@@ -70,22 +70,95 @@ Refresh your GitHub repository page. You should see the files.
 
 ## Step 2 — Deploy on Render
 
-1. Go to **https://render.com** and click **Get Started** / **Sign in**.
-2. Choose **Sign in with GitHub**. This is the easy path — it lets Render see
-   your repositories without any further setup.
-3. On the dashboard click **Add new +** → **Web Service**.
-4. Find `amparo` in the list and click **Connect**.
-   - If it is not listed, click **Configure account** and give Render access to
-     the repository.
-5. Render reads `render.yaml` from the repository and fills everything in
-   itself: the name, the Python version, the build command, the start command
-   and all the settings. **Change nothing.**
-6. Check that **Instance Type** says **Free**.
-7. Click **Deploy Web Service**.
+There are two routes through Render's dashboard. **They are not the same**, and
+picking the wrong one is why you might be staring at a form full of blank
+fields.
 
-Now wait. The first build takes **5–10 minutes**, because it is downloading and
-installing the mapping libraries. You will see a log scrolling past. That is
-normal and you do not need to read it.
+- **Blueprint** reads `render.yaml` from the repository and fills everything in
+  for you.
+- **Web Service** ignores `render.yaml` completely and asks you to type every
+  setting by hand.
+
+Either works. Pick one.
+
+---
+
+### Route A — Blueprint (less typing, fewer mistakes)
+
+1. Go to **https://dashboard.render.com**
+2. Click **Add new +** → **Blueprint** (*not* "Web Service")
+3. Connect your `amparo` repository
+4. Render shows you what it found in `render.yaml` — one service, on the free
+   plan. Click **Apply** / **Deploy**.
+
+That is the whole thing. Skip to Step 3.
+
+---
+
+### Route B — Web Service (typing everything by hand)
+
+If you already started this way, carry on; it is perfectly fine.
+
+**On the main form:**
+
+| Field | What to put |
+|---|---|
+| **Name** | `amparo` |
+| **Language** / Runtime | `Python 3` |
+| **Branch** | `main` |
+| **Region** | `Singapore` (closest to Pune of the free regions) |
+| **Root Directory** | `backend` |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `uvicorn main:app --host 0.0.0.0 --port $PORT` |
+| **Instance Type** | **Free** |
+
+> **Root Directory is the one people miss.** Leave it blank and Render looks
+> for `requirements.txt` in the top folder, does not find it, and the build
+> fails with a confusing message about not detecting a Python app. Depending on
+> which version of the form you get, this field is either on the main page or
+> tucked under **Advanced**.
+
+**Environment Variables** — click *Add Environment Variable* twice:
+
+| Key | Value |
+|---|---|
+| `PYTHON_VERSION` | `3.12.7` |
+| `ALLOW_DEV_CORS` | `false` |
+
+That really is all you need. Every other setting — the demo area, the emergency
+number, the file paths, the slider weighting — already has the correct value
+written into `backend/config.py` as its default, so leaving it unset gives you
+exactly the right behaviour. Adding more variables is not wrong, just noise.
+
+Those two are here because:
+
+- **`PYTHON_VERSION`** is read by Render, not by our code. Without it Render
+  picks whatever Python is newest, and the day that is a version with no
+  ready-made numpy or scipy package, the build tries to *compile* them from
+  source on a small free server and dies after twenty minutes.
+- **`ALLOW_DEV_CORS`** defaults to `true`, which is right on your laptop and
+  pointless in production — the backend serves the frontend itself, so every
+  request is same-origin. Turning it off closes a door that has nothing behind
+  it.
+
+**Advanced** (expand the section):
+
+| Setting | Value |
+|---|---|
+| **Health Check Path** | `/health` |
+| **Auto-Deploy** | leave **On** — this is what makes `git push` redeploy |
+
+Health Check Path is worth setting. Render uses it to decide whether the app
+actually came up. Pointed at `/health` it catches a broken map as a failed
+deploy; left blank, a dead app can be reported as live.
+
+Then click **Deploy Web Service**.
+
+---
+
+Whichever route you took: the first build takes **5–10 minutes**, because it is
+installing the mapping libraries. You will see a log scrolling past; you do not
+need to read it.
 
 **You are done when** the log ends with something like:
 
@@ -96,8 +169,6 @@ INFO:     Application startup complete.
 ```
 
 Your address is at the top of the page. Click it.
-
----
 
 ## Step 3 — Check it actually works
 
