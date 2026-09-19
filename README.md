@@ -19,7 +19,7 @@ length, once where it costs its length multiplied by its risk. First run gives
 the fastest route, second gives the safer one. Because scoring happens once at
 startup, answers come back instantly.
 
-## Stage 1 scope (what we're building first)
+## Stage 1 scope 
 
 The working prototype:
 
@@ -68,26 +68,4 @@ Before pushing anything, from backend/ and frontend/ respectively:
 The server installs `requirements.txt` only. The dev file adds the test tools,
 which have no business on a production machine.
 
-## Decisions worth knowing before you touch anything
 
-- **The map cache is committed to the repo, not gitignored.** A fresh deploy
-  with no cache downloads the map live from a public server that rate-limits.
-  That is how a demo dies. Commit `backend/data/graph_cache.graphml`.
-- **Safer cost is multiplicative, not additive.** `length * (1 + k * risk)`,
-  never `length + k * risk` — see docs/ARCHITECTURE.md for why.
-- **Risk is a proxy, not crime data.** Always present a route as a tradeoff
-  with numbers attached, never as a safety guarantee.
-- **The map tiles need no API key, and that is not an accident.** The
-  good-looking hosted basemaps (CARTO, Mapbox, Stadia) all want one now, and
-  CARTO prints "API KEY REQUIRED" diagonally across every tile if you go
-  without — which was discovered by trying it. We use plain OpenStreetMap, with
-  a pale Esri canvas as the second option.
-- **Lint before you build.** `npm run build` happily bundles a reference to a
-  variable that does not exist and hands you a blank white page. `npm run lint`
-  catches it in a second.
-
-## Licence
-
-MIT — see [LICENSE](LICENSE). Map data is © OpenStreetMap contributors under
-the Open Database License; the risk scores derived from it are part of this
-project.
