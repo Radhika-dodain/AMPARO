@@ -40,6 +40,12 @@ frontend/dist/
 # Miss it and the site is live but showing yesterday's frontend, which is a
 # confusing thing to debug at 2am. See DEPLOY.md.
 
+# Personal working notes. These stay on your machine on purpose - they are
+# preparation for the pitch and the build, not documentation of the project.
+# They are NOT deleted, just not published; both files are still in docs/.
+docs/PITCH.md
+docs/BUILD_PLAN.md
+
 # Editors / OS
 .vscode/
 .idea/

@@ -17,6 +17,12 @@ import react from '@vitejs/plugin-react';
 // Every path the backend owns. Anything not on this list is the app itself.
 const API_PATHS = ['/health', '/route', '/safety', '/reports'];
 
+// NOTE ON A `public/` FOLDER, if you ever add one back:
+// everything inside it is copied to the live site as-is, at the top level. A
+// developer note left in there is published at yoursite.com/that-file, which
+// happened once already with a README. Only real assets belong there - a
+// favicon, an og-image. Developer notes go in the code.
+
 export default defineConfig({
   plugins: [react()],
 

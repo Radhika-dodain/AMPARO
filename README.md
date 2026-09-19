@@ -36,7 +36,7 @@ external incident feeds, mobile app.
 
     backend/     FastAPI service — graph, risk scoring, routing, reports API
     frontend/    React + Vite + Leaflet map UI
-    docs/        Architecture notes, API contract, day-by-day build plan
+    docs/        How it is put together, and the API contract
     DEPLOY.md    Putting it online, written for a first-timer
 
 ## Running it
@@ -79,3 +79,9 @@ Before pushing anything: `npm run check` in frontend/ (lint, then build) and
 - **Lint before you build.** `npm run build` happily bundles a reference to a
   variable that does not exist and hands you a blank white page. `npm run lint`
   catches it in a second.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE). Map data is © OpenStreetMap contributors under
+the Open Database License; the risk scores derived from it are part of this
+project.
