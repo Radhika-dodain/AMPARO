@@ -37,6 +37,7 @@ external incident feeds, mobile app.
     backend/     FastAPI service — graph, risk scoring, routing, reports API
     frontend/    React + Vite + Leaflet map UI
     docs/        Architecture notes, API contract, day-by-day build plan
+    DEPLOY.md    Putting it online, written for a first-timer
 
 ## Running it
 
