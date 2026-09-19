@@ -32,7 +32,30 @@ export default defineConfig({
     proxy: Object.fromEntries(
       API_PATHS.map((path) => [
         path,
-        { target: 'http://127.0.0.1:8000', changeOrigin: true },
+        {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+
+          // Answer 503 when the backend is not up yet, instead of the 500 the
+          // proxy would otherwise invent.
+          //
+          // This is not pedantry. 503 means "there is a service here and it is
+          // not ready", which is exactly what a sleeping free server sends
+          // while it wakes - so the app's retry-and-wait behaviour kicks in
+          // locally too. Reported as 500 the app gives up immediately, and the
+          // one code path you most want to rehearse before a demo is the one
+          // you cannot reproduce on your own machine.
+          configure: (proxy) => {
+            proxy.on('error', (_error, _request, response) => {
+              if (response && !response.headersSent && response.writeHead) {
+                response.writeHead(503, { 'Content-Type': 'application/json' });
+                response.end(
+                  JSON.stringify({ detail: 'Backend is not running yet.' }),
+                );
+              }
+            });
+          },
+        },
       ]),
     ),
   },

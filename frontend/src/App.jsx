@@ -54,6 +54,8 @@ export default function App() {
   // ---- what the backend tells us about itself ----
   const [health, setHealth] = useState(null);
   const [bootError, setBootError] = useState(null);
+  const [waking, setWaking] = useState(0); // retry count while the server wakes
+  const [bootAttempt, setBootAttempt] = useState(0); // bumped by the Retry button
 
   // ---- the trip ----
   const [origin, setOrigin] = useState(null);
@@ -96,16 +98,22 @@ export default function App() {
   // ---- startup: settings, then the overlay and the places ----
   useEffect(() => {
     const controller = new AbortController();
-    getHealth(controller.signal)
-      .then(setHealth)
+
+    getHealth(controller.signal, setWaking)
+      .then((result) => {
+        setHealth(result);
+        setWaking(0);
+      })
       .catch((failure) => {
         if (failure.name !== 'AbortError') setBootError(failure.message);
       });
+
     getPlaces(controller.signal)
       .then(setPlaces)
       .catch(() => setPlaces(null)); // a missing places layer is survivable
+
     return () => controller.abort();
-  }, []);
+  }, [bootAttempt]);
 
   // ---- the overlay, refetched whenever the hour changes ----
   const loadOverlay = useCallback(
@@ -179,11 +187,19 @@ export default function App() {
   const emergency = health?.emergency_number || EMERGENCY_FALLBACK;
   const bands = overlay?.counts;
 
+  // What the header says about the server, in that order of priority.
+  //
+  // The waking message matters more than it looks. Free hosting sleeps when
+  // nobody has visited for a while, and the first person through the door
+  // waits the better part of a minute. Telling them that is the difference
+  // between "it is coming" and "this is broken" - and the person reading it
+  // might be a judge who will not think to refresh.
   const headerNote = useMemo(() => {
     if (bootError) return bootError;
-    if (!health) return 'Waking the map up…';
+    if (waking > 0) return 'Waking the server up — free hosting sleeps when idle…';
+    if (!health) return 'Loading…';
     return `${health.edges.toLocaleString()} streets scored`;
-  }, [health, bootError]);
+  }, [health, bootError, waking]);
 
   return (
     <div className="a-app">
@@ -233,7 +249,23 @@ export default function App() {
         <Butterfly className="a-fly-1" width={20} />
         <Butterfly className="a-fly-2" width={17} tone="pink" />
 
-        <div className="a-header-note">{headerNote}</div>
+        <div className={`a-header-note ${bootError ? 'is-bad' : ''}`}>
+          {headerNote}
+          {bootError && (
+            <button
+              type="button"
+              onClick={() => {
+                // Cleared here rather than inside the effect: clearing state on
+                // the way into an effect costs an extra render every time it
+                // runs, for something only this button ever needs.
+                setBootError(null);
+                setBootAttempt((n) => n + 1);
+              }}
+            >
+              Try again
+            </button>
+          )}
+        </div>
       </header>
 
       {/* ============ the map ============ */}

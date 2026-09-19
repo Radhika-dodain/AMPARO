@@ -227,7 +227,13 @@ and hand you a blank white page with no error anywhere.
 Waking it takes **about 50 seconds**, during which whoever opened your link
 stares at a blank tab and assumes it is broken.
 
-The fix is not clever, and you should do it anyway:
+The app now handles this by itself: it keeps retrying for 90 seconds and says
+*"Waking the server up — free hosting sleeps when idle"* while it does, rather
+than showing an error and sitting there. So a judge who opens a cold link sees
+an honest message and then the app, instead of something that looks broken.
+
+That is a safety net, not a plan. Fifty seconds of staring at a header is still
+fifty seconds you do not want in a two-minute pitch:
 
 > **Open your link about five minutes before you present, and leave the tab
 > open.** Every visit resets the 15-minute timer, so if you are clicking around
@@ -268,7 +274,8 @@ hosted database. Neither is worth doing before the hackathon.
 | Blank white page, map never appears | A JavaScript error | Press **F12** in the browser, open the **Console** tab, and read the red line. Usually a rebuild was forgotten — run `npm run check` and push |
 | Map is blank grey but the panel works | Tile server unreachable | Tick **Quiet map** in the top-right of the map; that uses a different tile provider |
 | Site shows an old version of the frontend | You pushed without rebuilding | `cd frontend && npm run check`, then commit and push |
-| First visit takes ~50 seconds | The free plan was asleep | Expected. See the demo-day section above |
+| First visit says "Waking the server up" for up to a minute | The free plan was asleep and is starting | Expected — it recovers on its own. See the demo-day section |
+| Header shows an error with a **Try again** button | The server did not wake within 90 seconds | Click it. If it fails twice, check the Render dashboard says "Live" |
 | `git push` rejected, "failed to push some refs" | Something exists on GitHub that you do not have locally — usually a README added at creation time | `git pull --rebase origin main` then push again |
 
 ---

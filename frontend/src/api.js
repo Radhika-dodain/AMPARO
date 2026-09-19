@@ -21,6 +21,8 @@
 //
 // ALSO:
 // - a shared timeout, so a stalled request shows an error instead of hanging
+// - retries while a sleeping free server wakes up, which takes longer than any
+//   sensible single timeout
 // - cancel a route request that is already in flight when the slider moves
 //   again, so an older answer cannot land after a newer one and draw the
 //   wrong line
@@ -32,7 +34,18 @@
 // local frontend at a deployed backend.
 const BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
 
+// How long to wait for one attempt before giving up on it.
 const TIMEOUT_MS = 20000;
+
+// How long to keep retrying the very first call, in total.
+//
+// This number exists because of free hosting. A free server is put to sleep
+// after a quiet spell, and the first visitor's request is what wakes it -
+// which takes the better part of a minute, during which connections are simply
+// dropped. The app used to treat that as "the backend is down", show an error,
+// and sit there forever until somebody thought to refresh. On a demo day, that
+// somebody is a judge, and they will not think to refresh.
+const WAKE_BUDGET_MS = 90000;
 
 /** Thrown for anything the user might need to read. `.message` is safe to show. */
 export class ApiError extends Error {
@@ -43,6 +56,8 @@ export class ApiError extends Error {
     this.cause = cause;
   }
 }
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Turn whatever the server said into one sentence a person can read.
@@ -68,11 +83,19 @@ function readableError(status, body) {
   return 'Something went wrong talking to the server.';
 }
 
-async function request(path, { method = 'GET', body, signal } = {}) {
+/** One attempt. Throws ApiError for anything retryable, AbortError if cancelled. */
+async function attempt(path, { method = 'GET', body, signal } = {}) {
   // Two things can cancel a request: our own timeout, and the caller changing
-  // their mind. Chain them so either works.
+  // their mind. They have to be told apart - a timeout is worth retrying, a
+  // caller who navigated away is not - so the timeout raises a flag on its way
+  // past, because the browser reports both as the same AbortError.
   const timer = new AbortController();
-  const timeout = setTimeout(() => timer.abort(), TIMEOUT_MS);
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    timer.abort();
+  }, TIMEOUT_MS);
+
   if (signal) {
     if (signal.aborted) timer.abort();
     else signal.addEventListener('abort', () => timer.abort(), { once: true });
@@ -88,12 +111,8 @@ async function request(path, { method = 'GET', body, signal } = {}) {
     });
   } catch (error) {
     clearTimeout(timeout);
-    // A cancelled request is not a failure - the caller asked for it. Rethrow
-    // untouched so callers can tell the two apart.
-    if (error.name === 'AbortError') throw error;
-    throw new ApiError('Could not reach the server. Is the backend running?', {
-      cause: error,
-    });
+    if (error.name === 'AbortError' && !timedOut) throw error; // caller's doing
+    throw new ApiError('Could not reach the server.', { status: 0, cause: error });
   }
   clearTimeout(timeout);
 
@@ -112,6 +131,46 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   return payload;
 }
 
+/** Is this worth trying again, or is it our own fault? */
+function worthRetrying(error) {
+  if (!(error instanceof ApiError)) return false;
+  // 0 means we never got a reply at all. 502/503/504 are what a host returns
+  // while it is still bringing the app up. A 400 or a 404 is our own mistake
+  // and will fail identically forever.
+  return error.status === 0 || error.status === 502 || error.status === 503 || error.status === 504;
+}
+
+/**
+ * A request, retried while the server might still be waking.
+ *
+ * `wakeBudgetMs` is how long to persist. `onWaking` is called before each
+ * retry so the interface can say what is happening rather than looking frozen.
+ */
+async function request(path, { wakeBudgetMs = 0, onWaking, ...options } = {}) {
+  const giveUpAt = Date.now() + wakeBudgetMs;
+  let tries = 0;
+
+  for (;;) {
+    try {
+      return await attempt(path, options);
+    } catch (error) {
+      tries += 1;
+      if (!worthRetrying(error) || Date.now() >= giveUpAt) {
+        // Out of patience. Say something a person can act on.
+        if (error instanceof ApiError && error.status === 0) {
+          error.message = tries > 1
+            ? 'The server is taking too long to wake up. Try again in a moment.'
+            : 'Could not reach the server. Is the backend running?';
+        }
+        throw error;
+      }
+      if (onWaking) onWaking(tries);
+      // Back off, but not for long: 1s, 2s, 4s, then every 6s.
+      await sleep(Math.min(1000 * 2 ** (tries - 1), 6000));
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // The endpoints
 // ---------------------------------------------------------------------------
@@ -123,8 +182,11 @@ async function request(path, { method = 'GET', body, signal } = {}) {
  * have to hardcode and then keep in step by hand: the area name and bounds,
  * the emergency number, the report categories, and the demo trip.
  */
-export function getHealth(signal) {
-  return request('/health', { signal });
+export function getHealth(signal, onWaking) {
+  // The one call that persists through a cold start. Everything else can fail
+  // and be retried by the user; without this one there is no map at all, so it
+  // is worth waiting out a sleeping server for.
+  return request('/health', { signal, wakeBudgetMs: WAKE_BUDGET_MS, onWaking });
 }
 
 /** Two points in, two routes out, with the numbers that describe them. */
@@ -148,12 +210,13 @@ export function getRoutes({ origin, dest, k, hour }, signal) {
 export function getOverlay({ hour, riskyOnly = false }, signal) {
   const query = new URLSearchParams({ hour: String(hour) });
   if (riskyOnly) query.set('risky_only', 'true');
-  return request(`/safety/overlay?${query}`, { signal });
+  // Also worth waiting out a cold start: without it the map has no colour.
+  return request(`/safety/overlay?${query}`, { signal, wakeBudgetMs: WAKE_BUDGET_MS });
 }
 
 /** The places the risk model is built from. Fetched once and kept. */
 export function getPlaces(signal) {
-  return request('/safety/places', { signal });
+  return request('/safety/places', { signal, wakeBudgetMs: WAKE_BUDGET_MS });
 }
 
 /**
