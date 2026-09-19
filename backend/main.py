@@ -125,6 +125,35 @@ def create_app() -> FastAPI:
             allow_headers=["*"],
         )
 
+    # ---- how long browsers may keep things ----
+    #
+    # This matters more than it sounds, and it caused a real and very
+    # confusing failure: after a deploy, someone who had visited before kept
+    # being served the PREVIOUS version of the app out of their own browser
+    # cache. The server was fixed, the new code was live, and their screen
+    # still showed the old broken behaviour - which looks exactly like the
+    # deploy not having worked.
+    #
+    # The two halves need opposite treatment:
+    #
+    #   /assets/...  the file name contains a hash of its contents, so a
+    #                changed file is a different name. Those can be kept
+    #                forever; they can never go stale.
+    #
+    #   index.html   the one file whose name never changes, and the file that
+    #                says which assets to load. It must be re-checked every
+    #                time, or a browser holding an old copy asks for asset
+    #                names that no longer exist.
+    @app.middleware("http")
+    async def cache_rules(request, call_next):
+        response = await call_next(request)
+        path = request.url.path
+        if path.startswith("/assets/"):
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        elif path == "/" or path.endswith(".html"):
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+        return response
+
     app.include_router(health.router)
     app.include_router(route.router)
     app.include_router(overlay.router)

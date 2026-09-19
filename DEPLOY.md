@@ -274,6 +274,7 @@ hosted database. Neither is worth doing before the hackathon.
 | Blank white page, map never appears | A JavaScript error | Press **F12** in the browser, open the **Console** tab, and read the red line. Usually a rebuild was forgotten — run `npm run check` and push |
 | Map is blank grey but the panel works | Tile server unreachable | Tick **Quiet map** in the top-right of the map; that uses a different tile provider |
 | Site shows an old version of the frontend | You pushed without rebuilding | `cd frontend && npm run check`, then commit and push |
+| Site works for other people but is broken **for you**, and a normal refresh does not help | Your browser is serving you the old app out of its own cache | Hard refresh: **Ctrl+Shift+R**. To confirm it is the cache, open the link in a private window first — if it works there, it is definitely the cache |
 | First visit says "Waking the server up" for up to a minute | The free plan was asleep and is starting | Expected — it recovers on its own. See the demo-day section |
 | Header shows an error with a **Try again** button | The server did not wake within 90 seconds | Click it. If it fails twice, check the Render dashboard says "Live" |
 | `git push` rejected, "failed to push some refs" | Something exists on GitHub that you do not have locally — usually a README added at creation time | `git pull --rebase origin main` then push again |
